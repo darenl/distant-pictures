@@ -127,8 +127,6 @@ io.on('connect', function(socket) {
   socket.on('takePicture', function() {
     takePicture(); 
   });
-
-  });
   // if you get the 'disconnect' message, say the user disconnected
   socket.on('disconnect', function() {
     console.log('user disconnected');
