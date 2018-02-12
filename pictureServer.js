@@ -28,7 +28,7 @@ var SerialPort = require('serialport'); // serial library
 var Readline = SerialPort.parsers.Readline; // read serial data as lines
 //-- Addition:
 var NodeWebcam = require( "node-webcam" );// load the webcam module
-
+var Jimp = require('jimp');
 //---------------------- WEBAPP SERVER SETUP ---------------------------------//
 // use express to create the simple webapp
 app.use(express.static('public')); // find pages in public directory
@@ -73,8 +73,6 @@ var opts = { //These Options define how the webcam is operated.
 };
 var Webcam = NodeWebcam.create( opts ); //starting up the webcam
 //----------------------------------------------------------------------------//
-
-
 
 //---------------------- SERIAL COMMUNICATION (Arduino) ----------------------//
 // start the serial port connection and read on newlines
@@ -124,8 +122,29 @@ io.on('connect', function(socket) {
   });
 
   //-- Addition: This function is called when the client clicks on the `Take a picture` button.
-  socket.on('takePicture', function() {
-    takePicture(); 
+  socket.on('takePicture', function(feat) {
+    
+    var imageName = new Date().toString().replace(/[&\/\\#,+()$~%.'":*?<>{}\s-]/g, '');
+    console.log("Make first image");
+    NodeWebcam.capture('public/'+imageName, opts, function(err, data){
+	var array = [];
+	array.push(imageName + '.jpg');
+	Jimp.read('public/' + imageName + '.jpg', function(err, image){
+	   if(err) throw err;
+	   if(feat === "greyscale"){
+		image.greyscale();
+	   }
+	   else if(feat === "blur"){
+		image.blur(100);
+	   }
+	   else if(feat === "contrast"){
+		image.contrast(.5);
+	   }
+	   image.write('public/'+imageName + '_2.jpg');
+	   array.push(imageName + '_2.jpg');
+	   io.emit('twoPictures', array);
+	});
+    });
   });
   // if you get the 'disconnect' message, say the user disconnected
   socket.on('disconnect', function() {
